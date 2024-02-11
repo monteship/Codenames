@@ -1,20 +1,23 @@
 <div *ngIf="gameData">
   <div class="table-container">
     <table class="table-outline">
-      <tr *ngFor="let row of gameData">
-        <td *ngFor="let word of row">
-          <span class="word"
-                [ngClass]="'white'"
-                [attr.id]="Object.keys(word)[0]"
-                (click)="toggleClass($event, word)">
-            {{ Object.keys(word)[0] }}
-          </span>
-        </td>
-      </tr>
+      <ng-container *ngFor="let rowIndex of [0, 1, 2, 3, 4]">
+        <tr>
+          <ng-container *ngFor="let colIndex of [0, 1, 2, 3, 4]">
+            <td>
+              <span class="word"
+                    [ngClass]="gameData[rowIndex * 5 + colIndex]?.color"
+                    [attr.id]="gameData[rowIndex * 5 + colIndex]?.word"
+                    (click)="toggleClass($event, gameData[rowIndex * 5 + colIndex])">
+                {{ gameData[rowIndex * 5 + colIndex]?.word }}
+              </span>
+            </td>
+          </ng-container>
+        </tr>
+      </ng-container>
     </table>
   </div>
 
   <!-- Button to restart the game -->
   <button (click)="restartGame()" class="button-outline">Restart Game</button>
-
 </div>

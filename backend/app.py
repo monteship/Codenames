@@ -1,93 +1,107 @@
-from pprint import pprint
+from typing import Optional, List
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, jsonify
 import random
 from flask_cors import CORS
+from flask_socketio import SocketIO
+
+from config import UKRAINIAN_WORDS
 
 app = Flask(__name__)
+app.config["SECRET_KEY"] = "vnkdjnfjknfl1232#"
+socketio = SocketIO(app, cors_allowed_origins="*")
 CORS(app)
 
-codenames = [
-    "Apple",
-    "Banana",
-    "Orange",
-    "Table",
-    "Chair",
-    "Computer",
-    "Keyboard",
-    "Mouse",
-    "Dog",
-    "Cat",
-    "Car",
-    "Train",
-    "Plane",
-    "Boat",
-    "Building",
-    "Tree",
-    "Mountain",
-    "River",
-    "Ocean",
-    "Lake",
-    "Apple",
-    "Banana",
-    "Orange",
-    "Table",
-    "Chair",
-    "Computer",
-    "Keyboard",
-    "Mouse",
-    "Dog",
-    "Cat",
-    "Car",
-    "Train",
-    "Plane",
-    "Boat",
-    "Building",
-    "Tree",
-    "Mountain",
-    "River",
-    "Ocean",
-    "Lake",
-]
+word_list = UKRAINIAN_WORDS
 
-words = None
+codenames: Optional[List[dict]] = []
 
 
 class RandomCodeNameGenerator:
-    def __init__(self, codenames_list: list):
-        self.codenames_list = codenames_list
+    def __init__(self, codenames_list):
+        self.codenames = set(codenames_list)
 
     def generate(self):
-        word = random.choice(self.codenames_list)
-        self.codenames_list.remove(word)
+        if not self.codenames:
+            raise ValueError("No more unique words available.")
+
+        word = random.choice(list(self.codenames))
+        self.codenames.remove(word)
         return word
+
+
+@socketio.on("connect")
+def handle_connect():
+    print("Client connected")
+    if not codenames:
+        restart_game()
+    socketio.emit("codenames", {"data": codenames})
+
+
+@socketio.on("getGameData")
+def handle_get_game_data():
+    print("Client request data")
+    socketio.emit("gameData", codenames)
+
+
+@socketio.on("clicked")
+def handle_word_click(name):
+    global codenames
+    color = "white"
+    for word in codenames:
+        if word["word"] == name:
+            word["clicked"] = True
+            color = word["color"]
+            break
+    socketio.emit("updateRender", {"data": {"word": name, "color": color}})
+
+
+@socketio.on("restart")
+def handle_restart():
+    print("Client requested game restart")
+    restart_game()
+    socketio.emit("gameData", codenames)
 
 
 @app.route("/", methods=["GET"])
 def get_codenames():
-    global words
-    if words is None:
+    global codenames
+    if codenames is None:
         restart_game()
-    return jsonify(words)
+    # return jsonify(codenames)
+    socketio.emit("gameData", codenames)
 
 
-@app.route("/restart", methods=["POST"])
 def restart_game():
-    global words
-    code_name_generator = RandomCodeNameGenerator(codenames_list=codenames.copy())
+    global codenames
+    codenames = []
+
+    name_generator = RandomCodeNameGenerator(word_list)
     team_words_quantity = [8, 9]
     random.shuffle(team_words_quantity)
-    words = []
-    for team, quantity in zip(["blue", "red"], team_words_quantity):
-        words.extend(
-            [{code_name_generator.generate(): team} for _ in range(0, quantity)]
+
+    for color, quantity in zip(["blue", "red"], team_words_quantity):
+        codenames.extend(
+            [
+                dict(word=name_generator.generate(), color=color, clicked=False)
+                for _ in range(0, quantity)
+            ]
         )
-    words.extend([{code_name_generator.generate(): "yellow"} for _ in range(6 + 1)])
-    words.append({code_name_generator.generate(): "black"})
-    random.shuffle(words)
-    words = [words[i : i + 5] for i in range(0, len(words), 5)]
-    return jsonify(words)
+
+    codenames.extend(
+        [
+            dict(word=name_generator.generate(), color="yellow", clicked=False)
+            for _ in range(7)
+        ]
+    )
+
+    codenames.append(dict(word=name_generator.generate(), color="black", clicked=False))
+
+    random.shuffle(codenames)
+
+    socketio.emit("gameData", codenames)
+    return jsonify(codenames)
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    socketio.run(app)
