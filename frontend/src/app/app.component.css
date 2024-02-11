@@ -1,0 +1,79 @@
+.table-container {
+  margin: 0 auto;
+  width: fit-content;
+}
+
+.button-outline {
+  background-color: transparent;
+  border: 1px solid #007bff;
+  color: #007bff;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.word {
+  align-items: center;
+  background: #f5f5fa;
+  border: 0;
+  border-radius: 8px;
+  box-shadow: -10px -10px 30px 0 #fff, 10px 10px 30px 0 #1d0dca17;
+  box-sizing: border-box;
+  color: #2a1f62;
+  cursor: pointer;
+  display: flex;
+  font-family: "Cascadia Code", Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1rem;
+  font-weight: bold;
+  justify-content: center;
+  line-height: 1.5rem;
+  text-align: left;
+  transition: .2s;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  white-space: pre;
+  width: 15rem;
+  height: 5rem;
+  word-break: normal;
+  word-spacing: normal;
+}
+
+
+.word:hover {
+  box-shadow: rgba(0, 0, 0, .3) 8px 8px 8px 8px;
+  transform: translate3d(0, 2px, 0);
+}
+
+.word:focus {
+  box-shadow: rgba(0, 0, 0, .3) 8px 8px 8px 8px;
+}
+
+
+.word.red {
+  color: red;
+  background-color: red;
+}
+
+.word.blue {
+  color: blue;
+  background-color: blue;
+}
+
+.word.yellow {
+  color: yellow;
+  background-color: yellow;
+}
+
+.word.black {
+  color: black;
+  background-color: black;
+}
+
+.word.active:hover {
+  color: black;
+}
+
+.word.black.active:hover {
+  color: white;
+}

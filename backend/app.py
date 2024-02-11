@@ -1,11 +1,12 @@
 from pprint import pprint
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import random
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
-# List of codenames for the game
 codenames = [
     "Apple",
     "Banana",
@@ -62,30 +63,30 @@ class RandomCodeNameGenerator:
         return word
 
 
+@app.route("/", methods=["GET"])
+def get_codenames():
+    global words
+    if words is None:
+        restart_game()
+    return jsonify(words)
+
+
 @app.route("/restart", methods=["POST"])
-def restart():
+def restart_game():
     global words
     code_name_generator = RandomCodeNameGenerator(codenames_list=codenames.copy())
     team_words_quantity = [8, 9]
     random.shuffle(team_words_quantity)
     words = []
-    for team, quantity in zip(["BLUE", "RED"], team_words_quantity):
+    for team, quantity in zip(["blue", "red"], team_words_quantity):
         words.extend(
             [{code_name_generator.generate(): team} for _ in range(0, quantity)]
         )
-    words.extend([{code_name_generator.generate(): "YELLOW"} for _ in range(6 + 1)])
-    words.append({code_name_generator.generate(): "BLACK"})
+    words.extend([{code_name_generator.generate(): "yellow"} for _ in range(6 + 1)])
+    words.append({code_name_generator.generate(): "black"})
     random.shuffle(words)
     words = [words[i : i + 5] for i in range(0, len(words), 5)]
-    return render_template("index.html", words=words)
-
-
-@app.route("/", methods=["GET"])
-def home():
-    global words
-    if words is None:
-        restart()
-    return render_template("index.html", words=words)
+    return jsonify(words)
 
 
 if __name__ == "__main__":
