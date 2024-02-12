@@ -17,22 +17,27 @@ export class AppComponent implements OnInit {
   ws: Socket;
 
   constructor(private http: HttpClient, private renderer: Renderer2) {
-    this.ws = io('http://localhost:5000');
+    this.ws = io('192.168.1.229:5000');
   }
 
   ngOnInit() {
     this.ws.on('connect', () => {
       console.log('WebSocket connection established');
-      this.ws.emit('getGameData');
+      this.ws.emit('update');
     });
 
-    this.ws.on('gameData', (data) => {
-      console.log("Get gameData from server")
+    this.ws.on('updated', (data) => {
+      console.log("Get updated from server")
       this.handleGameData(data);
     });
 
-    this.ws.on('updateRender', (data) => {
-      console.log('Received updateRender event:', data);
+    this.ws.on('restarted', (data) => {
+      console.log("Get restarted from server")
+      this.handleRestartedGameData(data);
+    });
+
+    this.ws.on('clicked', (data) => {
+      console.log('Received clicked event:', data);
       this.handleUpdateRender(data);
     });
   }
@@ -46,7 +51,16 @@ export class AppComponent implements OnInit {
       }));
     }
   }
-
+  handleRestartedGameData(data: any) {
+    if (Array.isArray(data)) {
+      this.gameData = data.map((wordObject: any) => ({
+        word: wordObject.word,
+        color: "white" ,
+        clicked: wordObject.clicked
+      }));
+    }
+    this.gameData = [...this.gameData];
+  }
 
   handleUpdateRender(data: any) {
     const word: string = data['data']['word'];
@@ -68,17 +82,16 @@ export class AppComponent implements OnInit {
     }
   }
 
-
   toggleClass(event: any, word: any): void {
     const hasClass = event.target.classList.contains('white');
 
     if (hasClass) {
-      this.ws.emit('clicked', word.word);
+      this.ws.emit('click', word.word);
     }
   }
 
   restartGame() {
-    this.ws.emit('restart'); // Emit restart event
+    this.ws.emit('restart');
   }
 
 

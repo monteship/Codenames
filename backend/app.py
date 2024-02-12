@@ -1,7 +1,9 @@
+import logging
 from typing import Optional, List
 
-from flask import Flask, jsonify
+from flask import Flask
 import random
+
 from flask_cors import CORS
 from flask_socketio import SocketIO
 
@@ -9,11 +11,14 @@ from config import UKRAINIAN_WORDS
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "vnkdjnfjknfl1232#"
-socketio = SocketIO(app, cors_allowed_origins="*")
 CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 word_list = UKRAINIAN_WORDS
-
 codenames: Optional[List[dict]] = []
 
 
@@ -30,78 +35,73 @@ class RandomCodeNameGenerator:
         return word
 
 
-@socketio.on("connect")
-def handle_connect():
-    print("Client connected")
-    if not codenames:
-        restart_game()
-    socketio.emit("codenames", {"data": codenames})
-
-
-@socketio.on("getGameData")
-def handle_get_game_data():
-    print("Client request data")
-    socketio.emit("gameData", codenames)
-
-
-@socketio.on("clicked")
-def handle_word_click(name):
+def initialize_game_data(restart: bool = False):
     global codenames
-    color = "white"
-    for word in codenames:
-        if word["word"] == name:
-            word["clicked"] = True
-            color = word["color"]
-            break
-    socketio.emit("updateRender", {"data": {"word": name, "color": color}})
+    if codenames is None or restart:
+        codenames = generate_game()
+    return codenames
 
 
-@socketio.on("restart")
-def handle_restart():
-    print("Client requested game restart")
-    restart_game()
-    socketio.emit("gameData", codenames)
-
-
-@app.route("/", methods=["GET"])
-def get_codenames():
-    global codenames
-    if codenames is None:
-        restart_game()
-    # return jsonify(codenames)
-    socketio.emit("gameData", codenames)
-
-
-def restart_game():
-    global codenames
-    codenames = []
-
+def generate_game():
     name_generator = RandomCodeNameGenerator(word_list)
     team_words_quantity = [8, 9]
     random.shuffle(team_words_quantity)
 
+    new_codenames = []
     for color, quantity in zip(["blue", "red"], team_words_quantity):
-        codenames.extend(
+        new_codenames.extend(
             [
                 dict(word=name_generator.generate(), color=color, clicked=False)
                 for _ in range(0, quantity)
             ]
         )
 
-    codenames.extend(
+    new_codenames.extend(
         [
             dict(word=name_generator.generate(), color="yellow", clicked=False)
             for _ in range(7)
         ]
     )
 
-    codenames.append(dict(word=name_generator.generate(), color="black", clicked=False))
+    new_codenames.append(
+        dict(word=name_generator.generate(), color="black", clicked=False)
+    )
 
-    random.shuffle(codenames)
+    random.shuffle(new_codenames)
 
-    socketio.emit("gameData", codenames)
-    return jsonify(codenames)
+    return new_codenames
 
 
-if __name__ == "__main__":
-    socketio.run(app)
+@socketio.on("update")
+def handle_connect():
+    logger.info("Data update")
+    initialize_game_data()
+    socketio.emit("updated", codenames)
+
+
+@socketio.on("restart")
+def handle_restart():
+    logger.info("Client requested game restart")
+    initialize_game_data(restart=True)
+    socketio.emit("restarted", codenames)
+
+
+@socketio.on("click")
+def handle_word_click(name):
+    color = "white"
+    for word in codenames:
+        if word["word"] == name:
+            word["clicked"] = True
+            color = word["color"]
+            break
+    socketio.emit(
+        "clicked",
+        {
+            "data": {
+                "word": name,
+                "color": color,
+            }
+        },
+    )
+
+

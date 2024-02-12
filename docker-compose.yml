@@ -3,16 +3,16 @@ services:
   backend:
     build: ./backend
     ports:
-      - "5000:5000"
+      - "5000:5001"
     networks:
-      - my-network
-
+      my-network:
+        ipv4_address: 172.19.0.2
   frontend:
     build: ./frontend
     ports:
       - "80:80"
     networks:
-      - my-network
-
+      my-network:
+        ipv4_address: 172.19.0.3
 networks:
   my-network:
