@@ -12,64 +12,68 @@ from config import UKRAINIAN_WORDS
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "vnkdjnfjknfl1232#"
 CORS(app)
+
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-word_list = UKRAINIAN_WORDS
+ukrainian_words = UKRAINIAN_WORDS
 codenames: Optional[List[dict]] = []
 
 
-class RandomCodeNameGenerator:
+class CodenameGenerator:
     def __init__(self, codenames_list):
-        self.codenames = set(codenames_list)
+        self.codenames = random.sample(codenames_list, 25)
 
-    def generate(self):
-        if not self.codenames:
-            raise ValueError("No more unique words available.")
+    def gen(self):
+        codename = random.choice(self.codenames)
+        self.codenames.remove(codename)
+        return codename
 
-        word = random.choice(list(self.codenames))
-        self.codenames.remove(word)
-        return word
+    def get_codenames(self, color: str, count: int):
+        return [
+            dict(word=self.gen(), color=color, clicked=False) for _ in range(0, count)
+        ]
 
 
 def initialize_game_data(restart: bool = False):
     global codenames
-    if codenames is None or restart:
-        codenames = generate_game()
+    if not codenames or restart:
+        codenames = generate_game(ukrainian_words)
     return codenames
 
 
-def generate_game():
-    name_generator = RandomCodeNameGenerator(word_list)
-    team_words_quantity = [8, 9]
-    random.shuffle(team_words_quantity)
+def generate_game(word_list):
+    generator = CodenameGenerator(word_list)
+    team_words_counts = [8, 9]
+    random.shuffle(team_words_counts)
 
     new_codenames = []
-    for color, quantity in zip(["blue", "red"], team_words_quantity):
-        new_codenames.extend(
-            [
-                dict(word=name_generator.generate(), color=color, clicked=False)
-                for _ in range(0, quantity)
-            ]
-        )
+    for color, count in zip(["blue", "red"], team_words_counts):
+        new_codenames.extend(generator.get_codenames(color, count))
 
-    new_codenames.extend(
-        [
-            dict(word=name_generator.generate(), color="yellow", clicked=False)
-            for _ in range(7)
-        ]
-    )
-
-    new_codenames.append(
-        dict(word=name_generator.generate(), color="black", clicked=False)
-    )
+    new_codenames.extend(generator.get_codenames(color="yellow", count=6))
+    new_codenames.extend(generator.get_codenames(color="balck", count=1))
 
     random.shuffle(new_codenames)
 
     return new_codenames
+
+
+@socketio.on("connect")
+def handle_connect():
+    logger.info("Client connected")
+    initialize_game_data()
+    socketio.emit("updated", codenames)
+
+
+@socketio.on("username")
+def handle_username():
+    logger.info("User connected")
+    initialize_game_data()
+    socketio.emit("updated", codenames)
 
 
 @socketio.on("update")
@@ -84,6 +88,11 @@ def handle_restart():
     logger.info("Client requested game restart")
     initialize_game_data(restart=True)
     socketio.emit("restarted", codenames)
+
+
+@socketio.on("endGame")
+def handle_endgame():
+    socketio.emit("gameEnded")
 
 
 @socketio.on("click")
@@ -103,5 +112,3 @@ def handle_word_click(name):
             }
         },
     )
-
-
