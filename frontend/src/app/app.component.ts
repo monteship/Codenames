@@ -1,9 +1,8 @@
-import {Component, OnInit, Renderer2} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {Component, OnInit} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {io, Socket} from 'socket.io-client';
-
 import {HttpClientModule} from '@angular/common/http';
+
 
 @Component({
   standalone: true,
@@ -13,64 +12,51 @@ import {HttpClientModule} from '@angular/common/http';
   imports: [CommonModule, HttpClientModule]
 })
 export class AppComponent implements OnInit {
-  gameData: any[] = [];
   ws: Socket;
-  redTeam: string = 'RED';
-  blueTeam: string = 'BLUE';
-  redMembers: any[] = [];
-  blueMembers: any[] = [];
-  redScore: number = 0;
-  blueScore: number = 0;
+  gameData: any[] = [];
 
-  constructor(private http: HttpClient, private renderer: Renderer2) {
+  redTeam: string = 'red';
+  redMembers: { name: string, role: string }[] = [];
+  redSpymaster: { name: string, role: string }[] = [];
+
+  blueTeam: string = 'blue';
+  blueMembers: { name: string, role: string }[] = [];
+  blueSpymaster: { name: string, role: string }[] = [];
+
+
+  redScore: number = 0;
+  redScoreInitial: number = 0;
+
+  blueScore: number = 0;
+  blueScoreInitial: number = 0;
+
+  constructor() {
     this.ws = io('192.168.1.229:5000');
   }
 
   ngOnInit() {
-    this.ws.on('connect', () => {
-      console.log('WebSocket connection established');
-      this.ws.emit('update');
-    });
-
-
-    this.ws.on('updated', (data) => {
+    this.ws.on('updatedGameData', (data) => {
       console.log("Get updated from server")
-      this.handleGameData(data);
+      this.updateThisData(data);
+      this.handleGameData(data["codenames"]);
     });
 
-    this.ws.on('restarted', (data) => {
-      console.log("Get restarted from server")
-      this.handleRestartedGameData(data);
+    this.ws.on('restartedGame', (data) => {
+      this.updateThisData(data);
+      this.handleRestartedGameData(data["codenames"]);
     });
 
     this.ws.on('clickedAction', (data) => {
       console.log('Received clicked event:', data);
-      this.handleUpdateRender(data);
+      this.handleClickedAction(data);
     });
 
-    this.ws.on('joinTeam', (user) => {
-      if (user.team === this.redTeam) {
-        this.redMembers.push(user.member);
-      } else {
-        this.blueMembers.push(user.member);
-      }
-    });
-
-    this.ws.on('updateScore', (data) => {
-      this.handleUpdateScore(data)
-    });
-    this.ws.on('gameEnded', () => {
-      this.handleGameEnd()
+    this.ws.on('joinedTeam', (data) => {
+      console.log('Received join event:', data);
+      this.handleJoinedTeam(data);
     });
   }
 
-  handleUpdateScore(data: any) {
-    if (data.color === this.redTeam) {
-      this.redScore += 1;
-    } else if (data.color === this.blueTeam) {
-      this.blueScore += 1;
-    }
-  }
 
   handleGameData(data: any) {
     if (Array.isArray(data)) {
@@ -82,32 +68,46 @@ export class AppComponent implements OnInit {
     }
   }
 
-  handleRestartedGameData(data: any) {
-    if (Array.isArray(data)) {
-      this.gameData = data.map((wordObject: any) => ({
-        word: wordObject.word,
-        color: "white",
-        clicked: wordObject.clicked
-      }));
-    }
-    this.gameData = [...this.gameData];
-    this.redMembers = [];
-    this.blueMembers = [];
-    this.redScore = 0;
-    this.blueScore = 0;
+  updateThisData(data: any) {
+    this.blueScoreInitial = data["initial_score_blue"];
+    this.redScoreInitial = data["initial_score_red"];
+    this.blueScore = data["score_blue"];
+    this.redScore = data["score_red"];
+    // this.redMembers = data["red_members"];
+    // this.blueMembers = data["blue_members"];
   }
 
-  handleUpdateRender(data: any) {
-    const word: string = data['data']['word'];
-    const color: string = data['data']['color'];
+  handleRestartedGameData(data: any) {
+    this.handleGameData(data);
+
+    this.redMembers = [];
+    this.redSpymaster = [];
+    this.redScore = 0;
+
+    this.blueMembers = [];
+    this.blueSpymaster = [];
+    this.blueScore = 0;
+    const activeElements = document.querySelectorAll('.active');
+    activeElements.forEach(element => {
+      element.classList.remove('active', 'blue', 'red', 'yellow', 'black');
+    });
+  }
+
+
+  handleClickedAction(data: any) {
+    const word: string = data['word'];
+    const color: string = data['color'];
     const element = this.gameData.find(item => item.word === word);
 
+    if (data.color === this.redTeam) {
+      this.redScore += 1;
+    } else if (data.color === this.blueTeam) {
+      this.blueScore += 1;
+    }
 
     if (element) {
       element.clicked = true;
       const elementRef = document.getElementById(word);
-      console.log('Element reference:', elementRef);
-
       if (elementRef) {
         console.log('Updating element class');
         elementRef.classList.remove('white');
@@ -117,8 +117,15 @@ export class AppComponent implements OnInit {
     }
   }
 
-  handleGameEnd() {
+  handleJoinedTeam(data: any) {
+    const color: string = data['color'];
+    const name: string = data["name"];
 
+    if (color == this.redTeam) {
+
+      this.redMembers.push({"name": name, 'role': "player"});
+
+    }
   }
 
   toggleClass(event: any, word: any): void {
@@ -127,15 +134,22 @@ export class AppComponent implements OnInit {
     }
     if (event.target.classList.contains('white')) {
       this.ws.emit('clickAction', word.word);
-      this.handleUpdateScore(word);
     }
     if (word.color === 'black') {
       this.ws.emit('endGame');
     }
   }
 
+  becomeSpymaster(event: any, team: string) {
+    this.ws.emit('becomeSpymaster', team);
+  }
+
+  joinTeam(event: any, team: string) {
+    this.ws.emit('joinTeam', team);
+  }
+
   restartGame() {
-    this.ws.emit('restart');
+    this.ws.emit('restartGame');
   }
 
 

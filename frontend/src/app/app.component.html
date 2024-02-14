@@ -1,4 +1,39 @@
-<div *ngIf="gameData">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codenames</title>
+</head>
+ <header >
+    <div>
+      <div *ngIf="redTeam">
+        <button class="jointeam" (click)="joinTeam($event, 'red')">Join Red</button>
+        <button class="jointeam" (click)="becomeSpymaster($event, 'red')">Red spymaster</button>
+        <h3>{{ redScore }}/{{ redScoreInitial }} слов</h3>
+        <ng-container class="players" *ngFor="let player of redMembers">
+          <li class="player"
+              [ngClass]="player.role">
+            {{ player.name }}
+          </li>
+        </ng-container>
+      </div>
+    </div>
+    <div>
+      <div *ngIf="blueTeam">
+        <button class="jointeam" (click)="joinTeam($event, 'blue')">Join Blue</button>
+        <button class="jointeam" (click)="becomeSpymaster($event, 'blue')">Blue spymaster</button>
+        <h3>{{ blueScore }}/{{ blueScoreInitial }} слов</h3>
+        <ng-container class="players" *ngFor="let player of blueMembers">
+          <li class="player"
+              [ngClass]="player['role']">
+            {{ player['name'] }}
+          </li>
+        </ng-container>
+      </div>
+    </div>
+</header>
+<body *ngIf="gameData">
   <div class="table-container">
     <table class="table-outline">
       <ng-container *ngFor="let rowIndex of [0, 1, 2, 3, 4]">
@@ -17,7 +52,7 @@
       </ng-container>
     </table>
   </div>
-
-  <!-- Button to restart the game -->
+</body>
   <button (click)="restartGame()" class="button-outline">Restart Game</button>
-</div>
+
+</html>
