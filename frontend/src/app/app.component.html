@@ -8,28 +8,24 @@
  <header >
     <div>
       <div *ngIf="redTeam">
-        <button class="jointeam" (click)="joinTeam($event, 'red')">Join Red</button>
-        <button class="jointeam" (click)="becomeSpymaster($event, 'red')">Red spymaster</button>
-        <h3>{{ redScore }}/{{ redScoreInitial }} слов</h3>
-        <ng-container class="players" *ngFor="let player of redMembers">
-          <li class="player"
-              [ngClass]="player.role">
-            {{ player.name }}
-          </li>
-        </ng-container>
+        <button class="spymaster red" (click)="becomeSpymaster($event, 'red')" [disabled]="redSpymaster != spymasterPlaceHolder">
+          {{ redSpymaster }}
+        </button>
+        <h3>{{ redScore }}/{{ redScoreInitial }}</h3>
+        <ul *ngFor="let player of redPlayers">
+          <li>{{ player }}</li>
+        </ul>
       </div>
     </div>
     <div>
       <div *ngIf="blueTeam">
-        <button class="jointeam" (click)="joinTeam($event, 'blue')">Join Blue</button>
-        <button class="jointeam" (click)="becomeSpymaster($event, 'blue')">Blue spymaster</button>
-        <h3>{{ blueScore }}/{{ blueScoreInitial }} слов</h3>
-        <ng-container class="players" *ngFor="let player of blueMembers">
-          <li class="player"
-              [ngClass]="player['role']">
-            {{ player['name'] }}
-          </li>
-        </ng-container>
+        <button class="spymaster" (click)="becomeSpymaster($event, 'blue')" [disabled]="blueSpymaster != spymasterPlaceHolder">
+          {{ blueSpymaster }}
+        </button>
+        <h3>{{ blueScore }}/{{ blueScoreInitial }}</h3>
+        <ul *ngFor="let player of bluePlayers">
+          <li>{{ player }}</li>
+        </ul>
       </div>
     </div>
 </header>

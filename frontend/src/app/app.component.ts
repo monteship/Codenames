@@ -3,6 +3,32 @@ import {CommonModule} from '@angular/common';
 import {io, Socket} from 'socket.io-client';
 import {HttpClientModule} from '@angular/common/http';
 
+interface Score {
+  initial_score_red: number;
+  score_red: number;
+  spymaster_red: string;
+  players_red: [];
+  initial_score_blue: number;
+  score_blue: number;
+  spymaster_blue: string;
+  players_blue: [];
+}
+
+interface Member {
+  name: string;
+  color: string;
+}
+
+interface GameData {
+  score: Score;
+  codenames: any[];
+  spymasters: any[];
+}
+
+interface ClickAction {
+  word: string;
+  color: string;
+}
 
 @Component({
   standalone: true,
@@ -11,81 +37,78 @@ import {HttpClientModule} from '@angular/common/http';
   styleUrls: ['./app.component.css'],
   imports: [CommonModule, HttpClientModule]
 })
+
 export class AppComponent implements OnInit {
   ws: Socket;
   gameData: any[] = [];
+  spymasterPlaceHolder: string = "Become spymaster"
 
   redTeam: string = 'red';
-  redMembers: { name: string, role: string }[] = [];
-  redSpymaster: { name: string, role: string }[] = [];
-
-  blueTeam: string = 'blue';
-  blueMembers: { name: string, role: string }[] = [];
-  blueSpymaster: { name: string, role: string }[] = [];
-
-
   redScore: number = 0;
   redScoreInitial: number = 0;
+  redPlayers: [] = [];
+  redSpymaster: string = "";
 
+  blueTeam: string = 'blue';
   blueScore: number = 0;
   blueScoreInitial: number = 0;
+  bluePlayers: [] = [];
+  blueSpymaster: string = "";
 
   constructor() {
-    this.ws = io('192.168.1.229:5000');
+    this.ws = io("192.168.1.229:5000");
   }
 
   ngOnInit() {
-    this.ws.on('updatedGameData', (data) => {
-      console.log("Get updated from server")
-      this.updateThisData(data);
-      this.handleGameData(data["codenames"]);
+    this.ws.on("usersGameData", (data: GameData) => {
+      this.mapGameData(data)
     });
-
-    this.ws.on('restartedGame', (data) => {
-      this.updateThisData(data);
-      this.handleRestartedGameData(data["codenames"]);
+    this.ws.on("spymasterGameData", (data: GameData) => {
+      this.mapGameData(data, false)
     });
-
-    this.ws.on('clickedAction', (data) => {
-      console.log('Received clicked event:', data);
-      this.handleClickedAction(data);
+    this.ws.on("restartedGameData", (data: GameData) => {
+      this.handleRestartedGameData(data)
     });
-
-    this.ws.on('joinedTeam', (data) => {
-      console.log('Received join event:', data);
-      this.handleJoinedTeam(data);
+    this.ws.on("clickedAction", (data: ClickAction) => {
+      this.handleClickedAction(data)
+    });
+    this.ws.on("spymasterAppeared", (data: Member) => {
+      this.handleSpymasterAppeared(data)
     });
   }
 
+  updateThisData(score: Score) {
+    this.redScoreInitial = score.initial_score_red;
+    this.redScore = score.score_red;
+    this.redSpymaster = score.spymaster_red;
+    this.redPlayers = score.players_red;
 
-  handleGameData(data: any) {
-    if (Array.isArray(data)) {
-      this.gameData = data.map((wordObject: any) => ({
+    this.blueScoreInitial = score.initial_score_blue;
+    this.blueScore = score.score_blue;
+    this.blueSpymaster = score.spymaster_blue;
+    this.bluePlayers = score.players_blue;
+  }
+
+  private mapGameData(data: GameData, isUsers: boolean = true) {
+    console.log("Received event:", isUsers, data);
+
+    this.updateThisData(data.score);
+
+    if (Array.isArray(data.codenames)) {
+      this.gameData = data.codenames.map((wordObject: any) => ({
         word: wordObject.word,
-        color: !wordObject.clicked ? "white" : wordObject.color,
+        color: !wordObject.clicked || !isUsers ? "white" : wordObject.color,
         clicked: wordObject.clicked
       }));
     }
   }
 
-  updateThisData(data: any) {
-    this.blueScoreInitial = data["initial_score_blue"];
-    this.redScoreInitial = data["initial_score_red"];
-    this.blueScore = data["score_blue"];
-    this.redScore = data["score_red"];
-    // this.redMembers = data["red_members"];
-    // this.blueMembers = data["blue_members"];
-  }
+  handleRestartedGameData(data: GameData) {
+    this.mapGameData(data);
 
-  handleRestartedGameData(data: any) {
-    this.handleGameData(data);
-
-    this.redMembers = [];
-    this.redSpymaster = [];
     this.redScore = 0;
-
-    this.blueMembers = [];
-    this.blueSpymaster = [];
+    this.redSpymaster = this.spymasterPlaceHolder;
+    this.blueSpymaster = this.spymasterPlaceHolder;
     this.blueScore = 0;
     const activeElements = document.querySelectorAll('.active');
     activeElements.forEach(element => {
@@ -93,38 +116,44 @@ export class AppComponent implements OnInit {
     });
   }
 
+  handleClickedAction(click: ClickAction) {
+    const element = this.gameData.find(item => item.word === click.word);
 
-  handleClickedAction(data: any) {
-    const word: string = data['word'];
-    const color: string = data['color'];
-    const element = this.gameData.find(item => item.word === word);
-
-    if (data.color === this.redTeam) {
+    if (click.color === this.redTeam) {
       this.redScore += 1;
-    } else if (data.color === this.blueTeam) {
+    } else if (click.color === this.blueTeam) {
       this.blueScore += 1;
     }
 
     if (element) {
       element.clicked = true;
-      const elementRef = document.getElementById(word);
+      const elementRef = document.getElementById(click.word);
       if (elementRef) {
         console.log('Updating element class');
         elementRef.classList.remove('white');
-        elementRef.classList.add(color);
+        elementRef.classList.add(click.color);
         elementRef.classList.add('active');
       }
     }
+    for (const team of ["red", "blue"]) {
+      this.toggleSpymasterButton(team, 'false');
+    }
   }
 
-  handleJoinedTeam(data: any) {
-    const color: string = data['color'];
-    const name: string = data["name"];
+  handleSpymasterAppeared(member: Member) {
+    if (member.color === 'red') {
+      this.redSpymaster = member.name
+      this.toggleSpymasterButton(member.color, 'true');
+    } else {
+      this.blueSpymaster = member.name;
+      this.toggleSpymasterButton(member.color, 'true');
+    }
+  }
 
-    if (color == this.redTeam) {
-
-      this.redMembers.push({"name": name, 'role': "player"});
-
+  toggleSpymasterButton(team: string, state: string) {
+    const button = document.querySelector(`button.spymaster.${team}`);
+    if (button) {
+      button.setAttribute('disabled', state);
     }
   }
 
@@ -144,9 +173,6 @@ export class AppComponent implements OnInit {
     this.ws.emit('becomeSpymaster', team);
   }
 
-  joinTeam(event: any, team: string) {
-    this.ws.emit('joinTeam', team);
-  }
 
   restartGame() {
     this.ws.emit('restartGame');
