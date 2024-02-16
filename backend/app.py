@@ -1,6 +1,7 @@
 from flask import Flask
 
 from flask_cors import CORS
+
 from flask_socketio import SocketIO
 
 import os
@@ -8,29 +9,41 @@ import os
 from flask_socketio import join_room, emit, leave_room
 import logging
 
+from flask_sqlalchemy import SQLAlchemy
+
 from playground import Playground
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY")
+app.config["SECRET_KEY"] = os.urandom(24)
 
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///codenames.sqlite"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db = SQLAlchemy(app)
+
+
+with app.app_context():
+    db.create_all()
 
 playground = Playground()
-logger = logging.getLogger(__name__)
+
+
+def transmit_game():
+    emit("guestGameData", playground.codenames)
+    emit("playerGameData", playground.codenames, to="players")
+    emit("spymasterGameData", playground.codenames, to="spymaster")
 
 
 @socketio.on("connect")
 def handle_connect():
     join_room("guests")
     logger.info("Client connected")
-    emit("usersGameData", playground.codenames)
-    emit("usersGameData", playground.codenames)
-    emit("spymasterGameData", playground.codenames, to="spymaster")
+    transmit_game()
 
 
 @socketio.on("restartGame")
@@ -40,17 +53,12 @@ def handle_restart():
     emit("restartedGameData", playground.codenames)
 
 
-@socketio.on("endGame")
-def handle_endgame():
-    emit("gameEnded")
-
-
 @socketio.on("clickAction")
 def handle_word_click(word):
     logger.info("Client clicked word")
     color = playground.trigger_click(word)
-    emit("usersGameData", playground.codenames)
     emit("clickedAction", {"word": word, "color": color})
+    transmit_game()
 
 
 @socketio.on("becomePlayer")
@@ -61,7 +69,7 @@ def become_player(color):
     join_room("players")
     playground.add_member(**member)
     emit("memberJoined", member)
-    emit("usersGameData", playground.codenames)
+    transmit_game()
 
 
 @socketio.on("becomeSpymaster")
@@ -72,5 +80,9 @@ def become_spymaster(color):
     join_room("spymaster")
     playground.add_member(**spymaster)
     emit("spymasterAppeared", spymaster)
-    emit("usersGameData", playground.codenames)
-    emit("spymasterGameData", playground.codenames, to="spymaster")
+    transmit_game()
+
+
+@socketio.on("endGame")
+def handle_endgame():
+    emit("gameEnded")

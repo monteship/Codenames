@@ -56,7 +56,8 @@ export class AppComponent implements OnInit {
   blueSpymaster: string = "";
 
   constructor() {
-    this.ws = io("192.168.1.229:5000");
+    this.ws = io("192.168.1.229:5000"
+    );
   }
 
   ngOnInit() {
