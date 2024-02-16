@@ -1,7 +1,8 @@
-import json
 import os
 import random
+import json
 from typing import Literal, Optional, Dict
+from utils import load_config
 
 
 class WordsLoader:

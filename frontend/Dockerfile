@@ -2,7 +2,7 @@
 FROM node:latest as build
 
 # Set the working directory inside the container
-WORKDIR /app
+WORKDIR /frontend
 
 # Copy package.json and package-lock.json to the working directory
 COPY package*.json ./
@@ -23,4 +23,4 @@ RUN ng build --configuration=production
 EXPOSE 4200
 
 # Command to start the Angular development server
-CMD ["ng", "serve", "--host", "0.0.0.0", "--port", "4200"]
+CMD ["ng", "serve", "--host", "0.0.0.0", "--port", "4200", "--disable-host-check"]
