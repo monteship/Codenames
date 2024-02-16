@@ -2,11 +2,9 @@ import os
 import random
 import json
 from typing import Literal, Optional, Dict
-from utils import load_config
 
 
 class WordsLoader:
-
     def __init__(self, language: Literal["en", "ru", "ua"] = "ua"):
         self.language = language
         self.path = os.path.join("config.json")
@@ -66,7 +64,8 @@ class CodenameGenerator:
 
 
 class Playground:
-    def __init__(self):
+    def __init__(self, session: str = "default"):
+        self.session = session
         self._codenames: Optional[Dict[str, str, list]] = None
         self.words_loader = WordsLoader()
 
