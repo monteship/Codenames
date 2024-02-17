@@ -35,15 +35,16 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     role = db.Column(db.String(20), nullable=False)
+    color = db.Column(db.String(20), nullable=False)
     token = db.Column(db.String(255), nullable=False, unique=True)
 
     def __repr__(self):
-        return f"User('{self.username}', '{self.role}')"
+        return {"username": self.username, "color": self.color, "role": self.role}
 
     @classmethod
     def create_user(cls, username, role):
         token = secrets.token_hex(24)
-        user = cls(username=username, token=token, role=role)
+        user = cls(username=username, token=token, role=role, color="neutral")
         db.session.add(user)
         db.session.commit()
         return user
@@ -57,26 +58,44 @@ with app.app_context():
     db.create_all()
 
 
-def transmit_game():
-    emit("guestGameData", playground.codenames)
-    emit("playerGameData", playground.codenames, to="players")
-    emit("spymasterGameData", playground.codenames, to="spymaster")
+def authentication_required(role=None):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            token = flask.request.headers.get("Authorization").split(" ")[-1]
+            user = User.find_by_token(token)
+            if not user:
+                user = User.create_user(playground.get_nickname(), "guest")
+                emit("grantToken", {"token": user.token, "name": user.username})
+                logger.info("New user %s connected", user.username)
+                join_room("guests")
+            logger.info("User %s connected", user.username)
+
+            if role and user.role not in role:
+                logger.warning(
+                    "User %s does not have the required role to access this functionality",
+                    user.username,
+                )
+                return
+
+            emit("updateGameData", playground.codenames)
+            if user.role == "spymaster":
+                emit("spymasterGameData", playground.codenames, to="spymaster")
+            kwargs["user"] = user
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 @socketio.on("connect")
+@authentication_required
 def handle_connect():
-    token = flask.request.headers.get("Authorization").split(" ")[-1]
-    user = User.find_by_token(token)
-    if not token or not user:
-        user = User.create_user(playground.get_nickname(), "guest")
-        emit("grantToken", {"token": user.token, "name": user.username})
-        logger.info("New user %s connected", user.username)
-    logger.info("User %s connected", user.username)
     join_room("guests")
-    transmit_game()
 
 
 @socketio.on("restartGame")
+@authentication_required(role=["players", "spymaster"])
 def handle_restart():
     logger.info("Client requested game restart")
     playground.restart_game()
@@ -84,33 +103,34 @@ def handle_restart():
 
 
 @socketio.on("clickAction")
+@authentication_required(role=["players"])
 def handle_word_click(word):
     logger.info("Client clicked word")
     color = playground.trigger_click(word)
     emit("clickedAction", {"word": word, "color": color})
-    transmit_game()
 
 
 @socketio.on("becomePlayer")
-def become_player(color):
-    member = {"name": playground.get_nickname(), "color": color, "role": "players"}
-    logger.info(f"Client become {color}_player")
+@authentication_required(role=["players", "guest"])
+def become_player(color, **kwargs):
+    user: User = kwargs["user"]
     leave_room("guest")
     join_room("players")
-    playground.add_member(**member)
-    emit("memberJoined", member)
-    transmit_game()
+    user.role = "players"
+    user.color = color
+    db.session.commit()
+    emit("newPlayer", kwargs["user"])
 
 
 @socketio.on("becomeSpymaster")
-def become_spymaster(color):
-    spymaster = {"name": playground.get_nickname(), "color": color, "role": "spymaster"}
-    logger.info(f"Client become {color}_spymaster")
+@authentication_required(role=["players"])
+def become_spymaster(**kwargs):
+    user: User = kwargs["user"]
+    user.role = "spymaster"
+    db.session.commit()
     leave_room("players")
     join_room("spymaster")
-    playground.add_member(**spymaster)
-    emit("spymasterAppeared", spymaster)
-    transmit_game()
+    emit("newSpymaster", kwargs["user"])
 
 
 @socketio.on("endGame")

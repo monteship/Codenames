@@ -15,8 +15,9 @@ interface Score {
 }
 
 interface Member {
-  name: string;
+  username: string;
   color: string;
+  role: string;
 }
 
 interface GameData {
@@ -47,13 +48,13 @@ export class AppComponent implements OnInit {
   redTeam: string = 'red';
   redScore: number = 0;
   redScoreInitial: number = 0;
-  redPlayers: [] = [];
+  redPlayers: string[] = [];
   redSpymaster: string = "";
 
   blueTeam: string = 'blue';
   blueScore: number = 0;
   blueScoreInitial: number = 0;
-  bluePlayers: [] = [];
+  bluePlayers: string[] = [];
   blueSpymaster: string = "";
 
   constructor() {
@@ -82,8 +83,11 @@ export class AppComponent implements OnInit {
     this.ws.on("clickedAction", (data: ClickAction) => {
       this.handleClickedAction(data)
     });
-    this.ws.on("spymasterAppeared", (data: Member) => {
-      this.handleSpymasterAppeared(data)
+    this.ws.on("newPlayer", (data: Member) => {
+      this.handleNewPlayer(data)
+    });
+    this.ws.on("newSpymaster", (data: Member) => {
+      this.handleNewSpymaster(data)
     });
     this.ws.on("spymasterVision", (data: GameData) => {
       this.handleSpymasterVision(data)
@@ -129,7 +133,7 @@ export class AppComponent implements OnInit {
     activeElements.forEach(element => {
       element.classList.remove('active', 'blue', 'red', 'yellow', 'black');
     });
-    
+
     const word = document.querySelector(`word`);
     if (word) {
       word.classList.remove('semi');
@@ -178,13 +182,30 @@ export class AppComponent implements OnInit {
     }
   }
 
-  handleSpymasterAppeared(member: Member) {
+
+  handleNewSpymaster(member: Member) {
     if (member.color === 'red') {
-      this.redSpymaster = member.name
-      this.toggleSpymasterButton(member.color, 'true');
+      const index = this.redPlayers.indexOf(member.username);
+      if (index !== -1) {
+        this.redPlayers.splice(index, 1);
+      }
+      this.redSpymaster = member.username;
     } else {
-      this.blueSpymaster = member.name;
-      this.toggleSpymasterButton(member.color, 'true');
+      const index = this.bluePlayers.indexOf(member.username);
+      if (index !== -1) {
+        this.redPlayers.splice(index, 1);
+      }
+      this.blueSpymaster = member.username;
+    }
+
+    this.toggleSpymasterButton(member.color, 'true');
+  }
+
+  handleNewPlayer(member: Member) {
+    if (member.color === 'red') {
+      this.redPlayers.push(member.username);
+    } else {
+      this.bluePlayers.push(member.username);
     }
   }
 

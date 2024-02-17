@@ -78,12 +78,8 @@ class Playground:
             "score": {
                 "initial_score_red": 0,
                 "score_red": 0,
-                "spymaster_red": "",
-                "players_red": [],
                 "initial_score_blue": 0,
                 "score_blue": 0,
-                "spymaster_blue": "",
-                "players_blue": [],
             },
             "codenames": [],
         }
@@ -110,16 +106,6 @@ class Playground:
                     self.codenames["score"][f"score_{color}"] += 1
                 return color
         return "white"
-
-    def add_member(self, name: str, color: str, role: str) -> None:
-        if role == "spymaster":
-            self._codenames["score"][f"players_{color}"].remove(name)
-            self._codenames["score"][f"{role}_{color}"] = name
-        else:
-            self._codenames["score"][f"players_{color}"].append(name)
-
-    def trigger_join(self, team, name):
-        pass
 
     def restart_game(self):
         self.__generate_game()
