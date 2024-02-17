@@ -56,11 +56,18 @@ export class AppComponent implements OnInit {
   blueSpymaster: string = "";
 
   constructor() {
-    this.ws = io("192.168.1.229:5000"
-    );
+    this.ws = io("http://192.168.1.229:5000", {
+      extraHeaders: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    });
   }
 
   ngOnInit() {
+
+    this.ws.on("grantToken", (token) => {
+      localStorage.setItem('token', token)
+    });
     this.ws.on("usersGameData", (data: GameData) => {
       this.mapGameData(data)
     });
@@ -77,6 +84,7 @@ export class AppComponent implements OnInit {
       this.handleSpymasterAppeared(data)
     });
   }
+
 
   updateThisData(score: Score) {
     this.redScoreInitial = score.initial_score_red;
