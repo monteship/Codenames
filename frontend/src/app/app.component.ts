@@ -113,6 +113,13 @@ export class AppComponent implements OnInit {
     }
   }
 
+  toggleSpymasterButton(team: string, state: string) {
+    const button = document.querySelector(`button.spymaster.${team}`);
+    if (button) {
+      button.setAttribute('disabled', state);
+    }
+  }
+
   handleRestartedGameData(data: GameData) {
     this.mapGameData(data);
 
@@ -126,7 +133,7 @@ export class AppComponent implements OnInit {
     activeElements.forEach(element => {
       element.classList.remove('active', 'blue', 'red', 'yellow', 'black');
     });
-    const tdElements = document.querySelectorAll('');
+    const tdElements = document.querySelectorAll('td');
 
     tdElements.forEach(element => {
       element.classList.remove('blue', 'red', 'yellow', 'black');
@@ -137,6 +144,10 @@ export class AppComponent implements OnInit {
       word.classList.remove('semi');
     }
     this.ws.emit('restarted');
+
+    for (const team of ["red", "blue"]) {
+      this.toggleSpymasterButton(team, 'false')
+    }
   }
 
   handleClickedAction(click: { "word": string, "color": string }) {
@@ -158,9 +169,8 @@ export class AppComponent implements OnInit {
         elementRef.classList.add('active');
       }
     }
-    for (const team of ["red", "blue"]) {
-      this.toggleSpymasterButton(team, 'false');
-    }
+
+
   }
 
   handleSpymasterGameData(data: GameData) {
@@ -195,12 +205,6 @@ export class AppComponent implements OnInit {
     this.blueSpymaster = event.blue.spymaster.join();
   }
 
-  toggleSpymasterButton(team: string, state: string) {
-    const button = document.querySelector(`button.spymaster.${team}`);
-    if (button) {
-      button.setAttribute('disabled', state);
-    }
-  }
 
   toggleClass(event: any, word: any): void {
     if (word.clicked) {
@@ -214,8 +218,9 @@ export class AppComponent implements OnInit {
     }
   }
 
-  becomeSpymaster(event: any) {
+  becomeSpymaster(event: any, color: string) {
     this.ws.emit('joinSpymaster');
+    this.toggleSpymasterButton(color, 'false')
   }
 
   becomePlayer(event: any, team: string) {

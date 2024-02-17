@@ -145,6 +145,7 @@ def handle_restart(user: User):
     logger.info("Client requested game restart")
     playground.restart_game()
     emit("restartedGameData", playground.codenames, to="all")
+    emit("playersUpdate", User.players(), to="all")
 
 
 @socketio.on("restarted", namespace="/")
