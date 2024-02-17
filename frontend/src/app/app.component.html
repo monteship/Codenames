@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<h1>{{name}}</h1>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -9,10 +8,10 @@
  <header >
     <div>
       <div *ngIf="redTeam">
-        <button class="spymaster red" (click)="becomeSpymaster($event, redTeam)" [disabled]="redSpymaster != spymasterPlaceHolder">
+        <button class="players red" (click)="becomePlayer($event, redTeam)">Join</button>
+        <button class="spymaster red" (click)="becomeSpymaster($event)" [disabled]="redSpymasterButtonDisabled">
           {{ redSpymaster }}
           </button>
-        <button class="spymaster red" (click)="becomePlayer($event, redTeam)"></button>
         <h3>{{ redScore }}/{{ redScoreInitial }}</h3>
         <ul *ngFor="let player of redPlayers">
           <li>{{ player }}</li>
@@ -21,10 +20,10 @@
     </div>
     <div>
       <div *ngIf="blueTeam">
-        <button class="spymaster" (click)="becomeSpymaster($event, blueTeam)" [disabled]="blueSpymaster != spymasterPlaceHolder">
+        <button class="spymaster blue" (click)="becomeSpymaster($event)" [disabled]="blueSpymasterButtonDisabled">
           {{ blueSpymaster }}
         </button>
-        <button class="spymaster red" (click)="becomePlayer($event, blueTeam)"></button>
+        <button class="players blue" (click)="becomePlayer($event, blueTeam)">Join</button>
         <h3>{{ blueScore }}/{{ blueScoreInitial }}</h3>
         <ul *ngFor="let player of bluePlayers">
           <li>{{ player }}</li>
@@ -38,7 +37,7 @@
       <ng-container *ngFor="let rowIndex of [0, 1, 2, 3, 4]">
         <tr>
           <ng-container *ngFor="let colIndex of [0, 1, 2, 3, 4]">
-            <td>
+            <td class="{{gameData[rowIndex * 5 + colIndex]?.word}}">
               <span class="word"
                     [ngClass]="gameData[rowIndex * 5 + colIndex]?.color"
                     [attr.id]="gameData[rowIndex * 5 + colIndex]?.word"
@@ -55,3 +54,5 @@
   <button (click)="restartGame()" class="button-outline">Restart Game</button>
 
 </html>
+<input type="text" placeholder="{{name}}" [(ngModel)]="name">
+<button (click)="updateName()">Change Name</button>

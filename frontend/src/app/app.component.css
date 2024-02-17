@@ -1,53 +1,51 @@
-html {
-  display: flex;
-  justify-content: space-evenly;
-}
-
 header {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: left;
-
+  justify-content: space-between;
 }
 
-header > div {
-  margin-bottom: 20px; /* Optional: Add margin for spacing between sections */
+/* Red Team */
+.red {
+  color: red;
 }
 
-header div {
-  text-align: left;
+/* Blue Team */
+.blue {
+  color: blue;
 }
 
-header h3 {
-  margin: 5px 0;
-}
-
-header .players {
-  display: grid;
-  justify-content: center;
-}
-
-header .players span {
-  display: inline-block;
-  margin: 0 5px; /* Optional: Add margin between names */
-}
-
-
+/* Table */
 .table-container {
-  margin: 0 auto;
-  width: fit-content;
+  margin-top: 20px;
 }
 
-.button-outline {
-  background-color: transparent;
-  border: 1px solid #007bff;
-  color: #007bff;
-  padding: 8px 16px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+.table-outline {
+  border-collapse: collapse;
+  width: 100%;
 }
 
+.table-outline td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+.table-outline td.red {
+  background-color: red;
+}
+
+.table-outline td.blue {
+  background-color: blue;
+}
+
+.table-outline td.yellow {
+  background-color: yellow;
+}
+
+.table-outline td.black {
+  background-color: black;
+}
+
+/* Word Colors */
 .word {
   align-items: center;
   background: #f5f5fa;
@@ -75,7 +73,6 @@ header .players span {
   word-spacing: normal;
 }
 
-
 .word:hover {
   box-shadow: rgba(0, 0, 0, .3) 8px 8px 8px 8px;
   transform: translate3d(0, 2px, 0);
@@ -85,26 +82,24 @@ header .players span {
   box-shadow: rgba(0, 0, 0, .3) 8px 8px 8px 8px;
 }
 
-
 .word.red {
-  color: red;
   background-color: red;
 }
 
 .word.blue {
-  color: blue;
   background-color: blue;
 }
 
+
 .word.yellow {
-  color: yellow;
   background-color: yellow;
 }
 
+
 .word.black {
-  color: black;
   background-color: black;
 }
+
 
 .word.active:hover {
   color: black;
@@ -112,4 +107,18 @@ header .players span {
 
 .word.black.active:hover {
   color: white;
+}
+
+/* Restart Button */
+.button-outline {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: transparent;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.button-outline:hover {
+  background-color: #f0f0f0;
 }
