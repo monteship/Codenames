@@ -41,6 +41,7 @@ interface ClickAction {
 export class AppComponent implements OnInit {
   ws: Socket;
   gameData: any[] = [];
+  name: string | undefined;
   spymasterPlaceHolder: string = "Become spymaster"
 
   redTeam: string = 'red';
@@ -57,22 +58,23 @@ export class AppComponent implements OnInit {
 
   constructor() {
     this.ws = io("http://192.168.1.229:5000", {
-      extraHeaders: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
+      transportOptions: {
+        polling: {
+          extraHeaders: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        }
       }
     });
   }
 
   ngOnInit() {
-
-    this.ws.on("grantToken", (token) => {
-      localStorage.setItem('token', token)
+    this.ws.on("grantToken", (data: { token: string, name: string }) => {
+      localStorage.setItem('token', data["token"])
+      this.name = data["name"];
     });
-    this.ws.on("usersGameData", (data: GameData) => {
+    this.ws.on("updateGameData", (data: GameData) => {
       this.mapGameData(data)
-    });
-    this.ws.on("spymasterGameData", (data: GameData) => {
-      this.mapGameData(data, false)
     });
     this.ws.on("restartedGameData", (data: GameData) => {
       this.handleRestartedGameData(data)
@@ -82,6 +84,9 @@ export class AppComponent implements OnInit {
     });
     this.ws.on("spymasterAppeared", (data: Member) => {
       this.handleSpymasterAppeared(data)
+    });
+    this.ws.on("spymasterVision", (data: GameData) => {
+      this.handleSpymasterVision(data)
     });
   }
 
@@ -98,15 +103,15 @@ export class AppComponent implements OnInit {
     this.bluePlayers = score.players_blue;
   }
 
-  private mapGameData(data: GameData, isUsers: boolean = true) {
-    console.log("Received event:", isUsers, data);
+  private mapGameData(data: GameData) {
+    console.log("Received event:", data);
 
     this.updateThisData(data.score);
 
     if (Array.isArray(data.codenames)) {
       this.gameData = data.codenames.map((wordObject: any) => ({
         word: wordObject.word,
-        color: !wordObject.clicked || !isUsers ? "white" : wordObject.color,
+        color: !wordObject.clicked ? "white" : wordObject.color,
         clicked: wordObject.clicked
       }));
     }
@@ -119,10 +124,16 @@ export class AppComponent implements OnInit {
     this.redSpymaster = this.spymasterPlaceHolder;
     this.blueSpymaster = this.spymasterPlaceHolder;
     this.blueScore = 0;
+
     const activeElements = document.querySelectorAll('.active');
     activeElements.forEach(element => {
       element.classList.remove('active', 'blue', 'red', 'yellow', 'black');
     });
+    
+    const word = document.querySelector(`word`);
+    if (word) {
+      word.classList.remove('semi');
+    }
   }
 
   handleClickedAction(click: ClickAction) {
@@ -146,6 +157,24 @@ export class AppComponent implements OnInit {
     }
     for (const team of ["red", "blue"]) {
       this.toggleSpymasterButton(team, 'false');
+    }
+  }
+
+  handleSpymasterVision(data: GameData) {
+    console.log("Received event:", data);
+
+    this.updateThisData(data.score);
+
+    if (Array.isArray(data.codenames)) {
+      this.gameData = data.codenames.map((wordObject: any) => ({
+        word: wordObject.word,
+        color: !wordObject.clicked ? "semi " + wordObject.color : wordObject.color,
+        clicked: wordObject.clicked
+      }));
+    }
+    const word = document.querySelector(`word`);
+    if (word) {
+      word.classList.add('semi');
     }
   }
 
@@ -180,6 +209,10 @@ export class AppComponent implements OnInit {
 
   becomeSpymaster(event: any, team: string) {
     this.ws.emit('becomeSpymaster', team);
+  }
+
+  becomePlayer(event: any, team: string) {
+    this.ws.emit('becomePlayer', team);
   }
 
 

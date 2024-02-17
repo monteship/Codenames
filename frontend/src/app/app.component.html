@@ -1,16 +1,18 @@
 <!DOCTYPE html>
+<h1>{{name}}</h1>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Codenames</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Codenames</title>
 </head>
  <header >
     <div>
       <div *ngIf="redTeam">
-        <button class="spymaster red" (click)="becomeSpymaster($event, 'red')" [disabled]="redSpymaster != spymasterPlaceHolder">
+        <button class="spymaster red" (click)="becomeSpymaster($event, redTeam)" [disabled]="redSpymaster != spymasterPlaceHolder">
           {{ redSpymaster }}
-        </button>
+          </button>
+        <button class="spymaster red" (click)="becomePlayer($event, redTeam)"></button>
         <h3>{{ redScore }}/{{ redScoreInitial }}</h3>
         <ul *ngFor="let player of redPlayers">
           <li>{{ player }}</li>
@@ -19,9 +21,10 @@
     </div>
     <div>
       <div *ngIf="blueTeam">
-        <button class="spymaster" (click)="becomeSpymaster($event, 'blue')" [disabled]="blueSpymaster != spymasterPlaceHolder">
+        <button class="spymaster" (click)="becomeSpymaster($event, blueTeam)" [disabled]="blueSpymaster != spymasterPlaceHolder">
           {{ blueSpymaster }}
         </button>
+        <button class="spymaster red" (click)="becomePlayer($event, blueTeam)"></button>
         <h3>{{ blueScore }}/{{ blueScoreInitial }}</h3>
         <ul *ngFor="let player of bluePlayers">
           <li>{{ player }}</li>

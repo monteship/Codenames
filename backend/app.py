@@ -1,19 +1,13 @@
 import secrets
 
 import flask
-from flask import Flask, request
+from flask import Flask
 
 from flask_cors import CORS
-from flask_jwt_extended import (
-    JWTManager,
-    get_jwt_identity,
-    jwt_required,
-    create_access_token,
-)
+
 
 from flask_socketio import SocketIO
 
-import os
 
 from flask_socketio import join_room, emit, leave_room
 import logging
@@ -46,6 +40,18 @@ class User(db.Model):
     def __repr__(self):
         return f"User('{self.username}', '{self.role}')"
 
+    @classmethod
+    def create_user(cls, username, role):
+        token = secrets.token_hex(24)
+        user = cls(username=username, token=token, role=role)
+        db.session.add(user)
+        db.session.commit()
+        return user
+
+    @classmethod
+    def find_by_token(cls, token):
+        return cls.query.filter_by(token=token).first()
+
 
 with app.app_context():
     db.create_all()
@@ -58,18 +64,15 @@ def transmit_game():
 
 
 @socketio.on("connect")
-def handle_connect(token):
-    user = User.query.filter_by(token=token).first()
-    if not token:
-        token = secrets.token_hex(24)
-        username = playground.get_nickname()
-        user = User(username=username, token=token, role="guest")
-        db.session.add(user)
-        db.session.commit()
-        emit("grantToken", token)
-        logger.info("New user %s connected", username)
+def handle_connect():
+    token = flask.request.headers.get("Authorization").split(" ")[-1]
+    user = User.find_by_token(token)
+    if not token or not user:
+        user = User.create_user(playground.get_nickname(), "guest")
+        emit("grantToken", {"token": user.token, "name": user.username})
+        logger.info("New user %s connected", user.username)
+    logger.info("User %s connected", user.username)
     join_room("guests")
-    logger.info(f"Client connected {user}")
     transmit_game()
 
 
