@@ -1,27 +1,38 @@
-# Frontend
+# Codenames Web Application
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.1.3.
+This project is a web application for playing the game Codenames. It is built using Angular and communicates with a backend server using WebSocket for real-time updates.
 
-## Development server
+### Prerequisites
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+- Node.js and npm installed on your machine
+- Angular CLI installed globally (`npm install -g @angular/cli`)
 
-## Code scaffolding
+### Installation
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+1. Navigate into the project directory
+   ```sh
+   cd your_project/frontend
+   ```
+2. Install dependencies
+   ```sh
+   npm install
+   ```
 
-## Build
+### Usage
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+1. Start the development server
+   ```sh
+   ng serve --host 0.0.0.0 --port 4200 
+   ```
+2. Open your browser and navigate to `http://localhost:4200` to view the application.
 
-## Running unit tests
+## Features
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+- Real-time updates using WebSocket communication
+- Multiple players support with team assignments
+- Spymaster mode for each team
+- Dynamic game board with clickable tiles
 
-## Running end-to-end tests
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
 
-## Further help
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
