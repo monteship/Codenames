@@ -43,8 +43,6 @@ def authentication_required(role=None, auth=False):
                 user = User.create_user("players")
                 logger.info("New user %s connected", user.username)
                 emit("auth", {"token": user.token, "username": user.username})
-            if auth:
-                emit("auth", {"token": user.token, "username": user.username})
 
             if role and user.role not in role:
                 logger.warning(
@@ -52,17 +50,6 @@ def authentication_required(role=None, auth=False):
                     user.username,
                 )
                 return
-            if user.role == "spymaster":
-                emit(
-                    "playersUpdate",
-                    User.get_players_by_color_and_role(),
-                    to="spymaster",
-                )
-                emit(
-                    "spymasterGameData",
-                    Game.find_by_name(user.game_name).get_game_data(),
-                    to="spymaster",
-                )
             kwargs["user"] = user
             return func(*args, **kwargs)
 
@@ -73,7 +60,7 @@ def authentication_required(role=None, auth=False):
 
 @socketio.on("connect")
 @authentication_required(role=None)
-def handle_connect(user: User, auth=True):
+def handle_connect(user: User):
     join_room("all")
     emit("playersUpdate", User.get_players_by_color_and_role(), to="all")
     game = Game.find_by_name(user.game_name)
@@ -104,7 +91,7 @@ def handle_restart(user: User):
     logger.info("Client requested game restart")
     game = Game.find_by_name(user.game_name)
     game.new_game()
-    emit("restartedGameData", game.get_game_data(), to="all")
+    emit("updateGameData", game.get_game_data(), to="all")
     emit("playersUpdate", User.get_players_by_color_and_role(), to="all")
 
 
@@ -142,11 +129,6 @@ def become_spymaster(user: User):
     leave_room("players")
     join_room("spymaster")
     emit("playersUpdate", User.get_players_by_color_and_role(), to="all")
-    emit(
-        "spymasterGameData",
-        Game.find_by_name(user.game_name).get_game_data(),
-        to="spymaster",
-    )
 
 
 @socketio.on("endGame")

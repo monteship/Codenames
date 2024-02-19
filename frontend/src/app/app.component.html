@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Codenames</title>
-  </head>
+  </head >
    <header >
       <div>
-        <div *ngIf="redTeam">
-          <button class="players red" (click)="becomePlayer($event, redTeam)">Join</button>
-          <button class="spymaster red" (click)="becomeSpymaster($event, redTeam)" [disabled]="redSpymasterButtonDisabled">
+        <div *ngIf="gameData">
+          <button class="players red" (click)="becomePlayer(redTeam)">Join</button>
+          <button class="spymaster red" (click)="becomeSpymaster()" [disabled]="redSpymasterButtonDisabled">
             {{ redSpymaster }}
             </button>
-          <h3>{{ redScore }}/{{ redScoreInitial }}</h3>
+          <h3>{{ gameData.red_score }}/{{ gameData.red_initial_score }}</h3>
           <ul *ngFor="let player of redPlayers">
             <li>{{ player }}</li>
           </ul>
@@ -21,38 +21,37 @@
          <button (click)="restartGame()" class="button-outline">Restart Game</button>
 
       <div>
-        <div *ngIf="blueTeam">
-          <button class="spymaster blue" (click)="becomeSpymaster($event, blueTeam)" [disabled]="blueSpymasterButtonDisabled">
+        <div *ngIf="gameData">
+          <button class="spymaster blue" (click)="becomeSpymaster()" [disabled]="blueSpymasterButtonDisabled">
             {{ blueSpymaster }}
           </button>
-          <button class="players blue" (click)="becomePlayer($event, blueTeam)">Join</button>
-          <h3>{{ blueScore }}/{{ blueScoreInitial }}</h3>
+          <button class="players blue" (click)="becomePlayer(blueTeam)">Join</button>
+          <h3>{{ gameData.blue_score }}/{{ gameData.blue_initial_score }}</h3>
           <ul *ngFor="let player of bluePlayers">
             <li>{{ player }}</li>
           </ul>
         </div>
       </div>
   </header>
-  <body *ngIf="gameData">
-    <div class="table-container">
-      <table class="table-outline">
-        <ng-container *ngFor="let rowIndex of [0, 1, 2, 3, 4]">
-          <tr>
-            <ng-container *ngFor="let colIndex of [0, 1, 2, 3, 4]">
-              <td class="{{gameData[rowIndex * 5 + colIndex]?.word}}">
-                <span class="word"
-                      [ngClass]="gameData[rowIndex * 5 + colIndex]?.color"
-                      [attr.id]="gameData[rowIndex * 5 + colIndex]?.word"
-                      (click)="toggleClass($event, gameData[rowIndex * 5 + colIndex])">
-                  {{ gameData[rowIndex * 5 + colIndex]?.word }}
-                </span>
-              </td>
-            </ng-container>
-          </tr>
-        </ng-container>
-      </table>
-    </div>
-  </body>
+    <body *ngIf="gameData">
+      <div class="table-container">
+        <table class="table-outline">
+          <ng-container *ngFor="let rowIndex of [0, 1, 2, 3, 4]">
+            <tr>
+              <ng-container *ngFor="let colIndex of [0, 1, 2, 3, 4]">
+                <td [ngClass]="spymasterReveal() ? gameData.codenames[rowIndex * 5 + colIndex]?.color : 'white'">
+                  <span class="word"
+                        [ngClass]="gameData.codenames[rowIndex * 5 + colIndex]?.state ? gameData.codenames[rowIndex * 5 + colIndex]?.color : 'white'"
+                        (click)="toggleClass(gameData.codenames[rowIndex * 5 + colIndex])">
+                    {{ gameData.codenames[rowIndex * 5 + colIndex]?.name }}
+                  </span>
+                </td>
+              </ng-container>
+            </tr>
+          </ng-container>
+        </table>
+      </div>
+    </body>
   <div>
     <input type="text" placeholder="{{name}}" [(ngModel)]="name">
     <button (click)="updateName()">Change Name</button>

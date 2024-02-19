@@ -82,12 +82,19 @@ class Game(db.Model):
         db.session.add(codename)
 
     def get_game_data(self):
+        red_score = Codename.query.filter_by(
+            game_name=self.name, color="red", state=True
+        ).count()
+        blue_score = Codename.query.filter_by(
+            game_name=self.name, color="blue", state=True
+        ).count()
+
         return {
             "name": self.name,
             "red_initial_score": self.red_initial_score,
             "blue_initial_score": self.blue_initial_score,
-            "red_score": self.red_score,
-            "blue_score": self.blue_score,
+            "red_score": red_score,
+            "blue_score": blue_score,
             "codenames": [
                 {
                     "name": codename.name,
