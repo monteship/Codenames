@@ -3,6 +3,28 @@ header {
   justify-content: space-between;
 }
 
+.team-header {
+  display: flex;
+  justify-content: space-between;
+}
+
+
+h3 {
+
+}
+
+.team {
+  margin: 5px;
+}
+
+/* Horizontal List Styles */
+.horizontal-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+
 /* Red Team */
 .red {
   color: red;
@@ -57,18 +79,14 @@ header {
   cursor: pointer;
   display: flex;
   font-family: "Cascadia Code", Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
-  /*font-size: 1rem;*/
   font-weight: bold;
   justify-content: center;
   line-height: 1.5rem;
-  /*text-align: left;*/
   transition: .2s;
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
   white-space: pre;
-  /*width: 15rem;*/
-  /*height: 5rem;*/
   word-break: normal;
   word-spacing: normal;
 }

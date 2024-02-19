@@ -18,8 +18,8 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = secrets.token_hex(24)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///codenames.sqlite"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-socketio = SocketIO(app, cors_allowed_origins="*")
 CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 from models import *
 

@@ -15,7 +15,7 @@ db = SQLAlchemy()
 
 
 class Game(db.Model):
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
     red_initial_score = db.Column(db.Integer, nullable=False, default=0)
     blue_initial_score = db.Column(db.Integer, nullable=False, default=0)
@@ -67,18 +67,22 @@ class Game(db.Model):
         }
         random.shuffle(codenames)
 
+        indexes = list(range(1, 26))
+        random.shuffle(indexes)
+        index_iter = iter(indexes)
+
         for color, count in team_counts.items():
             team_words = codenames[:count]
             codenames = codenames[count:]
             for word in team_words:
-                self.add_codename(word, color)
+                self.add_codename(word, color, next(index_iter))
         self.red_initial_score = team_counts["red"]
         self.blue_initial_score = team_counts["blue"]
         db.session.commit()
 
-    def add_codename(self, name: str, color: str):
+    def add_codename(self, name: str, color: str, index):
         """Add a codename to the game."""
-        codename = Codename(name=name, color=color, game=self)
+        codename = Codename(id=index, name=name, color=color, game=self)
         db.session.add(codename)
 
     def get_game_data(self):
