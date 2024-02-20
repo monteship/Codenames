@@ -3,11 +3,6 @@ header {
   justify-content: space-between;
 }
 
-.team-header {
-  display: flex;
-  justify-content: space-between;
-}
-
 
 h3 {
 
@@ -15,15 +10,28 @@ h3 {
 
 .team {
   margin: 5px;
+  flex: 1; /* Each team takes up equal space */
+
 }
 
-/* Horizontal List Styles */
-.horizontal-list {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
+.team.red {
+  text-align: left;
+
 }
 
+.team.blue {
+  text-align: right;
+
+}
+
+.score-container {
+  display: flex;
+  align-items: center; /* Center items vertically */
+}
+
+.score {
+  margin: 10px; /* Adjust spacing between scores */
+}
 
 /* Red Team */
 .red {
@@ -33,6 +41,15 @@ h3 {
 /* Blue Team */
 .blue {
   color: blue;
+}
+
+.container {
+  display: flex;
+  justify-content: center; /* Center items horizontally */
+}
+
+.container > div {
+  text-align: center; /* Center text within the div */
 }
 
 /* Table */
@@ -129,7 +146,6 @@ h3 {
 
 /* Restart Button */
 .button-outline {
-  margin-top: 20px;
   padding: 10px 20px;
   background-color: transparent;
   border: 1px solid #ccc;

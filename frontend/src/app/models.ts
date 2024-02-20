@@ -14,7 +14,7 @@ export interface GameData {
 
 export interface Team {
   players: string[];
-  spymaster: string[];
+  spymaster: string;
 }
 
 export interface Players {

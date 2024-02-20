@@ -114,7 +114,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     role = db.Column(db.String(20), nullable=False)
-    color = db.Column(db.String(20), nullable=False, default="grey")
+    color = db.Column(db.String(20), nullable=False, default="all")
     token = db.Column(db.String(255), nullable=False, unique=True)
 
     game_name = Column(db.String, ForeignKey("game.name"), default="default")
@@ -125,7 +125,7 @@ class User(db.Model):
         """Create a new user and add it to the database."""
         token = secrets.token_hex(24)
         user = cls(
-            username=words_loader.get_nickname(), token=token, role=role, color="grey"
+            username=words_loader.get_nickname(), token=token, role=role, color="all"
         )
         try:
             db.session.add(user)
@@ -143,11 +143,17 @@ class User(db.Model):
     @classmethod
     def get_players_by_color_and_role(cls) -> dict:
         """Get all players grouped by color and role."""
-        players = defaultdict(lambda: defaultdict(list))
+        players = {
+            "red": {"players": [], "spymaster": ""},
+            "blue": {"players": [], "spymaster": ""},
+            "all": {"players": []},
+        }
 
-        for user in cls.query.filter(User.role != "all").all():
+        for user in cls.query.filter(User.role == "players").all():
             players[user.color][user.role].append(user.username or "")
 
+        for user in cls.query.filter(User.role == "spymaster").all():
+            players[user.color][user.role] = user.username
         return players
 
     def update_role(self, new_role: str) -> None:
@@ -181,7 +187,7 @@ class User(db.Model):
 class Codename(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(25), unique=True, nullable=False)
-    color = db.Column(db.String(25), nullable=False)  # color can't be unique
+    color = db.Column(db.String(25), nullable=False)
     state = db.Column(db.Boolean, nullable=False, default=False)
     game_name = db.Column(db.Integer, db.ForeignKey("game.name"))
 

@@ -2,7 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {HttpClientModule} from '@angular/common/http';
 import {FormsModule} from '@angular/forms';
-import {GameData, Codename} from './models';
+import {GameData, Codename, Team, Players} from './models';
 import {GameService} from './game.service';
 
 
@@ -17,18 +17,15 @@ import {GameService} from './game.service';
 
 export class AppComponent implements OnInit {
   name: string | null = localStorage.getItem('username');
+  isSpymaster: boolean = false;
+
   redTeam: string = 'red';
   blueTeam: string = 'blue';
 
-  redSpymaster: string = "Spymaster";
-  blueSpymaster: string = "Spymaster";
-  redPlayers: string[] | null = [];
-  bluePlayers: string[] | null = [];
-
-  redSpymasterButtonDisabled: boolean = false;
-  blueSpymasterButtonDisabled: boolean = false;
 
   gameData: GameData | null = null;
+
+  playersData: Players | undefined = undefined;
 
   constructor(private gameService: GameService) {
 
@@ -45,22 +42,11 @@ export class AppComponent implements OnInit {
       this.gameData = data
     });
     this.gameService.onPlayersUpdate().subscribe(players => {
-      this.redPlayers = players.red?.players ?? null;
-      this.bluePlayers = players.blue?.players ?? null;
-
-      this.redSpymaster = players.red?.spymaster?.join() ?? "Spymaster";
-      this.blueSpymaster = players.blue?.spymaster?.join() ?? "Spymaster";
-
-      this.redSpymasterButtonDisabled = this.redSpymaster !== "Spymaster";
-      this.blueSpymasterButtonDisabled = this.blueSpymaster !== "Spymaster";
+      this.playersData = players;
+      this.isSpymaster = this.name === players.red.spymaster || this.name === players.blue.spymaster
     });
   }
 
-
-  spymasterReveal() {
-    return this.name == this.redSpymaster || this.name === this.blueSpymaster;
-
-  }
 
   updateName() {
     this.gameService.changeUsername(this.name);

@@ -87,7 +87,7 @@ def handle_change_username(new_username: str, user: User):
 def handle_restart(user: User):
     for user in User.query.all():
         user.update_role("all")
-        user.update_color("grey")
+        user.update_color("all")
     logger.info("Client requested game restart")
     game = Game.find_by_name(user.game_name)
     game.new_game()
